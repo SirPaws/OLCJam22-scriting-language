@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="pstring_t">
+		<DisplayString>"{c_str,[length]sb}"</DisplayString>
+		<StringView>c_str,[length]</StringView>
+	</Type>
+
+	<Type Name="token_t">
+		<DisplayString Condition="kind &lt;  255">'{(char)kind}'</DisplayString >
+		<DisplayString Condition="kind &gt;= 255">'{kind}'</DisplayString >
+	</Type>
+<!--
+
+
+
+	<Type Name="type_t">
+		<DisplayString Condition="kind == 0">void</DisplayString>
+		<DisplayString Condition="kind == 1">int</DisplayString>
+		<DisplayString Condition="kind == 2">uint</DisplayString>
+		<DisplayString Condition="kind == 3">float</DisplayString>
+		<DisplayString Condition="kind == 4">string</DisplayString>
+		<DisplayString Condition="kind == 5 &amp;&amp; arr.is_dynamic">[*]{*arr.type}</DisplayString>
+		<DisplayString Condition="kind == 5">[{arr.size}]{*arr.type}</DisplayString>
+		<DisplayString Condition="kind == 6">ref {*ref}</DisplayString>
+		<DisplayString Condition="kind == 7">*{*ptr}</DisplayString>
+		<DisplayString Condition="kind == 8">?{*nullable}</DisplayString>
+		<DisplayString Condition="kind == 9 &amp;&amp; return_type">fn: {*return_type}</DisplayString>
+		<DisplayString Condition="kind == 9 &amp;&amp; !return_type">fn</DisplayString>
+		<DisplayString>{name,sb}</DisplayString>
+		<Expand>
+			<Item Name="[return type]" Condition="kind == 9 &amp;&amp; return_type">*return_type</Item>
+			<Synthetic Name="[return type]" Condition="kind == 9 &amp;&amp; !return_type">
+				<DisplayString>void</DisplayString>
+			</Synthetic>
+			<ExpandedItem Condition="kind == 9">parameters</ExpandedItem>
+
+			<Item Name="Length" Condition="kind == 5 &amp;&amp; !arr.is_dynamic">arr.size</Item>
+			<ExpandedItem  Condition="kind == 5">*arr.type</ExpandedItem>
+			<ExpandedItem  Condition="kind == 6">*ref</ExpandedItem>
+			<ExpandedItem  Condition="kind == 7">*ptr</ExpandedItem>
+			<ExpandedItem  Condition="kind == 8">*nullable</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="parameter_list_t">
+		<Expand>
+			<Item Name="[parameter count]">num_parameters</Item>
+			<Synthetic Name="[named parameters]" Condition="num_named_parameters > 0">
+				<DisplayString>{num_named_parameters}</DisplayString>
+				<Expand>
+					<CustomListItems MaxItemsPerView="5000">
+						<Variable Name="count"     InitialValue="num_named_parameters"/>
+						<Variable Name="nodes"     InitialValue="(named_parameter_node_t**)named_parameters.nodes"/>
+						<Variable Name="bucket_id" InitialValue="0"/>
+						<Variable Name="num_buckets_used" InitialValue="named_parameters.num_used_buckets"/>
+						<Variable Name="buckets_with_values" InitialValue="(__int64*)named_parameters.buckets_with_values"/>
+						<Variable Name="cur_elem" InitialValue="(named_parameter_node_t*)0"/>
+						<Size>count</Size>
+						<Exec>cur_elem = nodes[bucket_id]</Exec>
+						<Loop>
+							<If Condition="cur_elem == nullptr">
+								<Break Condition="bucket_id == num_buckets_used"></Break>
+								<Exec>cur_elem = nodes[buckets_with_values[bucket_id]]</Exec>
+								<Exec>bucket_id++</Exec>
+							</If>
+							<Item>cur_elem->parameter</Item>
+							<Exec>cur_elem = cur_elem->next</Exec>
+						</Loop>
+					</CustomListItems>
+				</Expand>
+			</Synthetic>
+			<Synthetic Name="[unnamed parameters]" Condition="num_unnamed_parameters > 0">
+				<DisplayString>{num_unnamed_parameters}</DisplayString>
+				<Expand>
+					<ArrayItems>
+						<Direction>Forward</Direction>
+						<Rank>1</Rank>
+						<Size>num_unnamed_parameters</Size>
+						<ValuePointer>unnamed_parameters</ValuePointer>
+					</ArrayItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+	
+	<Type Name="declaration_t">
+		<DisplayString>'{kind}'</DisplayString>
+
+		<Expand HideRawView="true">
+			<ExpandedItem Condition="kind == 0">structure</ExpandedItem>
+			<Item Condition="kind &gt; 2" Name="[type]">type</Item>
+			<Item Condition="kind &gt; 2" Name="[name]">identifier</Item>
+			<Item Condition="kind &gt; 2" Name="[value]">expression</Item>
+
+			<Item Condition="kind == 1" Name="[name]">name</Item>
+			<Item Condition="kind == 1 &amp;&amp; return_type" Name="[return type]">*return_type</Item>
+			<Synthetic Name="[return type]" Condition="kind == 1 &amp;&amp; !return_type" >
+				<DisplayString>void</DisplayString>
+			</Synthetic>
+			<ExpandedItem Condition="kind == 1">parameters</ExpandedItem>
+			<Item Name="[function body]">*function_body</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="parameter_t">
+		<DisplayString>{name.c_str, sb}: {*type}</DisplayString>
+		<Expand HideRawView="true">
+			<Item Name="[name]">name.c_str,sb</Item>
+			<Item Name="[type]">*type</Item>
+			<Item Condition="value" Name="[value]">value</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="statement_t">
+		<DisplayString Condition="kind == 0">{*expression}</DisplayString>
+		<DisplayString Condition="kind == 1">return</DisplayString>
+		<DisplayString Condition="kind == 2">block</DisplayString>
+		<DisplayString Condition="kind == 3">defer</DisplayString>
+		<DisplayString Condition="kind == 4">while</DisplayString>
+		<DisplayString Condition="kind == 5">noop</DisplayString>
+		<DisplayString Condition="kind == 6">for</DisplayString>
+		<DisplayString Condition="kind == 7">if</DisplayString>
+		<DisplayString >do statement</DisplayString>
+		<Expand HideRawView="true">
+			<ExpandedItem Condition="kind == 0 || kind == 1">*expression</ExpandedItem>
+			<ExpandedItem Condition="kind == 2">*defer</ExpandedItem>
+
+			<Item Name="[condition]" Condition="kind == 4 || kind == 8">*swhile.condition</Item>
+			<Item Name="[statement]" Condition="kind == 4 || kind == 8">*swhile.block</Item>
+
+			<Item Name="[condition]" Condition="kind == 7">*sif.condition</Item>
+			<Item Name="[true branch]" Condition="kind == 7">*sif.true_branch</Item>
+			<Item Name="[false branch]" Condition="kind == 7">*sif.false_branch</Item>
+
+			<Item Name="[declaration]" Condition="kind == 6">*sfor.declaration</Item>
+			<Item Name="[condition]" Condition="kind == 6">*sfor.condition</Item>
+			<Item Name="[increment]" Condition="kind == 6">*sfor.increment</Item>
+			<Item Name="[statement]" Condition="kind == 6">*sfor.block</Item>
+
+
+			<ArrayItems Condition="kind == 2">
+				<Direction>Forward</Direction>
+				<Rank>1</Rank>
+				<Size>block.num_items</Size>
+				<ValuePointer>block.items</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+-->
+
+</AutoVisualizer>
